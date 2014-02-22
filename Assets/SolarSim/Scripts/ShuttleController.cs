@@ -4,6 +4,7 @@ using Leap;
 
 public class ShuttleController : MonoBehaviour 
 {
+	//The Leap Motion controller object
 	Controller leapController;
 
 	//Game Objects for accessing the fuel storage
