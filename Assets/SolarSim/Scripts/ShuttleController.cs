@@ -70,6 +70,7 @@ public class ShuttleController : MonoBehaviour
 		return h;
 	}
 
+	//Checks the current y position relative to the ground and determines which layer of atmosphere the shuttle is in
 	void AtmosphereCheck()
 	{
 		//Troposphere check
@@ -103,7 +104,7 @@ public class ShuttleController : MonoBehaviour
 		}
 
 		//Thermosphere check
-		if (transform.position.y > 22857) && transform.position.y < 100000)
+		if (transform.position.y > 22857 && transform.position.y < 100000)
 		{
 			inTropo = false;
 			inStrat = false;
@@ -126,7 +127,15 @@ public class ShuttleController : MonoBehaviour
 	//Physics frame updates
 	void FixedUpdate()
 	{
-		AtmosphereCheck
+		//Update where the shuttle is
+		AtmosphereCheck();
+
+		//If shuttle has reached orbit threshold, end the level
+		if (inOrbit)
+		{
+			//End level
+		}
+
 
 		//Get the frame info from the leap motion controller
 		Frame frame = leapController.Frame();
