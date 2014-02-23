@@ -154,11 +154,11 @@ public class ShuttleController : MonoBehaviour
 
 			//Get the current shuttle rotation, then applies hand difference (y) to shuttle's z rotation
 			Vector3 newRot = transform.localRotation.eulerAngles;
-			newRot.z = -handDiff.y * 20.0f;
+			//newRot.z = -handDiff.y * 20.0f;
 			
 			// adding the rot.z as a way to use banking (rolling) to turn.
-			newRot.y += handDiff.z * 3.0f - newRot.z * 0.03f * transform.rigidbody.velocity.magnitude;
-			newRot.x = -(avgPalmForward.y - 0.1f) * 100.0f;
+			//newRot.y += handDiff.z * 3.0f - newRot.z * 0.03f * transform.rigidbody.velocity.magnitude;
+			//newRot.x = -(avgPalmForward.y - 0.1f) * 100.0f;
 			
 			// if closed fist, then stop the plane and slowly go backwards.
 			if (frame.Fingers.Count < 3)
@@ -168,7 +168,7 @@ public class ShuttleController : MonoBehaviour
 			
 			transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(newRot), 0.1f);
 			//transform.rigidbody.velocity = transform.up * thrustPower;
-			transform.rigidbody.AddForce(transform.up, Force);
+			transform.rigidbody.AddForce(transform.up * thrustPower, ForceMode.Force);
 		}
 		//Else Fall to deaths
 		else
@@ -189,6 +189,7 @@ public class ShuttleController : MonoBehaviour
 			GUI.Label(new Rect(10, 10, 100, 50), "Current Level: Thermosphere");
 
 		GUI.Label(new Rect(10, 50, 100, 50), "Speed: " + transform.rigidbody.velocity.magnitude);
+		GUI.Label (new Rect(10, 70, 100, 50), "Height: " + transform.position.y);
 
 	}
 }
