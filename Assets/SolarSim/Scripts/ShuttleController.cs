@@ -127,7 +127,7 @@ public class ShuttleController : MonoBehaviour
 	//Physics frame updates
 	void FixedUpdate()
 	{
-		//Update where the shuttle is
+		//Update where the shuttle is relative to ground
 		AtmosphereCheck();
 
 		//If shuttle has reached orbit threshold, end the level
@@ -136,11 +136,10 @@ public class ShuttleController : MonoBehaviour
 			//End level
 		}
 
-
 		//Get the frame info from the leap motion controller
 		Frame frame = leapController.Frame();
 
-		//If there are 2 hands
+		//If there are 2 hands update leap logic
 		if (frame.Hands.Count >= 2)
 		{
 			//Assign the hands to variables
@@ -160,9 +159,6 @@ public class ShuttleController : MonoBehaviour
 			// adding the rot.z as a way to use banking (rolling) to turn.
 			newRot.y += handDiff.z * 3.0f - newRot.z * 0.03f * transform.rigidbody.velocity.magnitude;
 			newRot.x = -(avgPalmForward.y - 0.1f) * 100.0f;
-
-
-
 			
 			// if closed fist, then stop the plane and slowly go backwards.
 			if (frame.Fingers.Count < 3)
@@ -171,7 +167,28 @@ public class ShuttleController : MonoBehaviour
 			}
 			
 			transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(newRot), 0.1f);
-			transform.rigidbody.velocity = transform.up * thrustPower;
+			//transform.rigidbody.velocity = transform.up * thrustPower;
+			transform.rigidbody.AddForce(transform.up, Force);
 		}
+		//Else Fall to deaths
+		else
+		{
+
+		}
+	}
+
+	void OnGUI()
+	{
+		if (inTropo)
+			GUI.Label(new Rect(10, 10, 100, 50), "Current Level: Troposphere");
+		if (inStrat)
+			GUI.Label(new Rect(10, 10, 100, 50), "Current Level: Stratosphere");
+		if (inMeso)
+			GUI.Label(new Rect(10, 10, 100, 50), "Current Level: Mesosphere");
+		if (inTherm)
+			GUI.Label(new Rect(10, 10, 100, 50), "Current Level: Thermosphere");
+
+		GUI.Label(new Rect(10, 50, 100, 50), "Speed: " + transform.rigidbody.velocity.magnitude);
+
 	}
 }
