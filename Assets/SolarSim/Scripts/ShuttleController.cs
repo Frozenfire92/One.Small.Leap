@@ -86,7 +86,7 @@ public class ShuttleController : MonoBehaviour
 		return Mathf.Sqrt((transform.position.x * transform.position.x) + (transform.position.z * transform.position.z));
 	}
 
-	float ManageFuel()
+	/*float ManageFuel()
 	{
 		//Game Over
 		if (fuelAmt <= 0.0f)
@@ -101,9 +101,10 @@ public class ShuttleController : MonoBehaviour
 			//Subtract used fuel
 
 			//Check if time to remove moduel
-			if ()
+			//if ()
 		}
 	}
+	*/
 
 	//Checks the current y position relative to the ground and determines which layer of atmosphere the shuttle is in
 	void AtmosphereCheck()
