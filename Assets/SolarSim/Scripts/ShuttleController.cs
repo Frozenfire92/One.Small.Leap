@@ -4,7 +4,7 @@ using Leap;
 
 public class ShuttleController : MonoBehaviour 
 {
-	//Game Objects for accessing the fuel storage
+	//Game Objects for accessing the fuel storage objects
 	public GameObject fuelLeft;
 	public GameObject fuelRight;
 	public GameObject fuelMain;
@@ -15,12 +15,12 @@ public class ShuttleController : MonoBehaviour
 	//The Leap Motion controller object
 	private Leap.Controller leapController;
 
-
 	//Flags for determining what area of atmosphere shuttle is in
 	private bool inTropo;
 	private bool inStrat;
 	private bool inMeso;
 	private bool inTherm;
+	private bool inOrbit;
 
 	//Use this for initialization
 	void Start () 
@@ -35,6 +35,7 @@ public class ShuttleController : MonoBehaviour
 		inStrat = false;
 		inMeso = false;
 		inTherm = false;
+		inOrbit = false;
 	}
 
 	//Get the left hand, not 100% sure how it works yet
@@ -69,9 +70,64 @@ public class ShuttleController : MonoBehaviour
 		return h;
 	}
 
+	void AtmosphereCheck()
+	{
+		//Troposphere check
+		if (transform.position.y <= 3425)
+		{
+			inTropo = true;
+			inStrat = false;
+			inMeso = false;
+			inTherm = false;
+			inOrbit = false;
+		}
+
+		//Stratosphere check
+		if (transform.position.y > 3425 && transform.position.y <= 14285)
+		{
+			inTropo = false;
+			inStrat = true;
+			inMeso = false;
+			inTherm = false;
+			inOrbit = false;
+		}
+
+		//Mesosphere check
+		if (transform.position.y > 14285 && transform.position.y <= 22857)
+		{
+			inTropo = false;
+			inStrat = false;
+			inMeso = true;
+			inTherm = false;
+			inOrbit = false;
+		}
+
+		//Thermosphere check
+		if (transform.position.y > 22857) && transform.position.y < 100000)
+		{
+			inTropo = false;
+			inStrat = false;
+			inMeso = false;
+			inTherm = true;
+			inOrbit = false;
+		}
+
+		//Orbit check
+		if (transform.position.y >= 100000)
+		{
+			inTropo = false;
+			inStrat = false;
+			inMeso = false;
+			inTherm = false;
+			inOrbit = true;
+		}
+	}
+
 	//Physics frame updates
 	void FixedUpdate()
 	{
+		AtmosphereCheck
+
 		//Get the frame info from the leap motion controller
 		Frame frame = leapController.Frame();
 
