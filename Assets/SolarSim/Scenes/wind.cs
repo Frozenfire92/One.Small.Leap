@@ -21,8 +21,8 @@ public class wind : MonoBehaviour {
 		if (windy == false) {
 						xValue = random.Next (0, 1000);
 						zValue = random.Next (0, 1000);
-			stopTime = 100000;  //random.Next (30, 2000);
-						shuttle.transform.rigidbody.AddForce(xValue, yValue, zValue);
+						stopTime = random.Next (30, 2000);
+					 	shuttle.transform.rigidbody.AddForce(xValue, yValue, zValue);
 				windy = true;
 				}
 
@@ -32,10 +32,11 @@ public class wind : MonoBehaviour {
 	void Update () {
 	
 		if (windy == true) {
+			if (timer >= stopTime){
 
+			}
 			timer ++;
-
-							}
+		}
 
 
 	}
