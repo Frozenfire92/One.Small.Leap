@@ -4,25 +4,31 @@ using Leap;
 
 public class ShuttleController : MonoBehaviour 
 {
-	//Game Objects for accessing the fuel storage objects
+	//Explosion prefab
+	public GameObject explosionPrefab;
+
+	//Camera Reference
+	public GameObject camera;
+
+	//Fuel
 	public GameObject fuelLeft;
 	public GameObject fuelRight;
 	public GameObject fuelMain;
 	private bool stageOneReleased;
-	private bool stageTwoReleased;
-
-	//Fuel
+	private bool stageTwoReleased;	
 	[Range(0, 100)]
 	public float fuelAmt = 100f;
 	public float fuelDrain = 0.001f;
+	private bool outOfFuel;
+	private int outOfFuelCount;
 
-	//The value of force to apply to thruster
+	//Thrust Force
 	public float thrustPower = 20.0f;
 
 	//The Leap Motion controller object
 	private Leap.Controller leapController;
 
-	//Flags for determining what area of atmosphere shuttle is in
+	//Current Atmosphere Layer
 	private bool inTropo;
 	private bool inStrat;
 	private bool inMeso;
@@ -40,6 +46,7 @@ public class ShuttleController : MonoBehaviour
 	//Use this for initialization
 	void Start () 
 	{
+		//Countdown Text
 		largeFont.fontSize = 50;
 		largeFont.alignment = TextAnchor.MiddleCenter;
 		largeFont.normal.textColor = Color.white;
@@ -62,6 +69,8 @@ public class ShuttleController : MonoBehaviour
 		//Keep the fuel packets on
 		stageOneReleased = false;
 		stageTwoReleased = false;
+		outOfFuel = false;
+		outOfFuelCount = 0;
 
 		//The current atmosphere level
 		inTropo = true;
@@ -71,7 +80,100 @@ public class ShuttleController : MonoBehaviour
 		inOrbit = false;
 	}
 
-	//Get the left hand, not 100% sure how it works yet
+	//Updates the game logic based on discrete physics updates
+	void FixedUpdate()
+	{
+		//If counting down before player can play, disable movement
+		if (countingDown)
+		{
+			timeLeft = (int)(countDownTimer - Time.time);
+			if (timeLeft <= 0)
+				countingDown = false;
+			transform.rigidbody.useGravity = false;
+		}
+		//if out of fuel
+		else if (outOfFuel)
+		{
+			//fall to deaths
+			if (outOfFuelCount < 2)
+			{
+				//Slow Shuttle Down
+				transform.rigidbody.AddForce(-transform.up * thrustPower, ForceMode.Force);
+				outOfFuelCount++;
+			}
+		}
+		//Else, game on!
+		else
+		{
+			//Turn gravity on
+			transform.rigidbody.useGravity = true;
+
+			//Update where the shuttle is relative to ground
+			AtmosphereCheck();
+			
+			//If shuttle has reached orbit threshold, end the level
+			if (inOrbit)
+			{
+				//Application.loadedLevel();
+			}
+
+			//Manage fuel use
+			ManageFuel();
+			
+			//Get the frame info from the leap motion controller
+			Frame frame = leapController.Frame();
+			
+			//If there are 2 hands update leap logic
+			if (frame.Hands.Count >= 2)
+			{
+				//Assign the hands to variables
+				Hand leftHand = GetLeftMostHand(frame);
+				Hand rightHand = GetRightMostHand(frame);
+				
+				//Takes the average forward tilt of palms, used for x rotation
+				Vector3 avgPalmForward = (frame.Hands[0].Direction.ToUnity() + frame.Hands[1].Direction.ToUnity()) * 0.5f;
+				
+				//Gets the Vector difference between the palm positions
+				Vector3 handDiff = leftHand.PalmPosition.ToUnityScaled() - rightHand.PalmPosition.ToUnityScaled();
+				
+				//Get the current shuttle rotation, then applies the y hand difference to shuttle's z rotation
+				Vector3 newRot = transform.localRotation.eulerAngles;
+				newRot.z = -handDiff.y * 20.0f;
+				
+				// adding the rot.z as a way to use banking (rolling) to turn.
+				newRot.y += handDiff.z * 3.0f - newRot.z * 0.03f * transform.rigidbody.velocity.magnitude;
+				newRot.x = -(avgPalmForward.y - 0.1f) * 100.0f;
+				
+				// if closed fist, then stop the plane and slowly go backwards.
+				//if (frame.Fingers.Count < 3)
+				//{
+					//thrustPower = -3.0f;
+				//}
+
+				//Apply the rotation & force
+				transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(newRot), 0.1f);
+				//transform.rigidbody.velocity = transform.up * thrustPower;
+				transform.rigidbody.AddForce(transform.up * thrustPower, ForceMode.Force);
+			}
+			//Else Fall to deaths
+			else
+			{
+				
+			}
+		}
+	}
+
+	void OnTriggerEnter(Collider other)
+	{
+		if (other.tag == "Ground" && outOfFuel)
+		{
+			Instantiate(explosionPrefab, transform.position, transform.rotation);
+			camera.transform.parent = null;
+			Destroy (this);
+		}
+	}
+
+	//Get the left hand from Leap, not 100% sure how it works yet
 	Hand GetLeftMostHand(Frame f)
 	{
 		float smallestVal = float.MaxValue;
@@ -87,7 +189,7 @@ public class ShuttleController : MonoBehaviour
 		return h;
 	}
 
-	//Get the right hand, not 100% sure how it works yet
+	//Get the right hand from Leap, not 100% sure how it works yet
 	Hand GetRightMostHand(Frame f)
 	{
 		float largestVal = -float.MaxValue;
@@ -109,12 +211,13 @@ public class ShuttleController : MonoBehaviour
 		return Mathf.Sqrt((transform.position.x * transform.position.x) + (transform.position.z * transform.position.z));
 	}
 
+	//Manages Fuel & related operations
 	void ManageFuel()
 	{
 		//Game Over
 		if (fuelAmt <= 0.0f)
 		{
-			//Game Over, fall to die
+			outOfFuel = true;
 		}
 		//Else manage fuel
 		else
@@ -134,21 +237,21 @@ public class ShuttleController : MonoBehaviour
 				Debug.Log ("Big Drain");
 			}
 
-			//Check if time to remove module 1
-			if (!stageOneReleased && transform.position.y > 50000)
+			//Check if time to remove sub fuel modules
+			if (!stageOneReleased && transform.position.y > 40000)
 			{
 				fuelLeft.transform.parent = null;
 				fuelRight.transform.parent = null;
 				stageOneReleased = true;
 			}
-			if (!stageTwoReleased && transform.position.y > 75000)
+			//Check if time to remove main fuel module
+			if (!stageTwoReleased && transform.position.y > 60000)
 			{
 				fuelMain.transform.parent = null;
 				stageTwoReleased = true;
 			}
 		}
 	}
-
 
 	//Checks the current y position relative to the ground and determines which layer of atmosphere the shuttle is in
 	void AtmosphereCheck()
@@ -204,92 +307,23 @@ public class ShuttleController : MonoBehaviour
 		}
 	}
 
-	//Physics frame updates
-	void FixedUpdate()
-	{
-		//If counting down before player can play
-		if (countingDown)
-		{
-			timeLeft = (int)(countDownTimer - Time.time);
-			if (timeLeft <= 0)
-				countingDown = false;
-			transform.rigidbody.useGravity = false;
-
-		}
-		//Else, game on!
-		else
-		{
-			transform.rigidbody.useGravity = true;
-
-			//Update where the shuttle is relative to ground
-			AtmosphereCheck();
-			
-			//If shuttle has reached orbit threshold, end the level
-			if (inOrbit)
-			{
-				//End level
-			}
-			
-			ManageFuel();
-			
-			//Get the frame info from the leap motion controller
-			Frame frame = leapController.Frame();
-			
-			//If there are 2 hands update leap logic
-			if (frame.Hands.Count >= 2)
-			{
-				//Assign the hands to variables
-				Hand leftHand = GetLeftMostHand(frame);
-				Hand rightHand = GetRightMostHand(frame);
-				
-				//Takes the average forward vector of palms, used for x rotation
-				Vector3 avgPalmForward = (frame.Hands[0].Direction.ToUnity() + frame.Hands[1].Direction.ToUnity()) * 0.5f;
-				
-				//Gets the Vector difference between the palm positions
-				Vector3 handDiff = leftHand.PalmPosition.ToUnityScaled() - rightHand.PalmPosition.ToUnityScaled();
-				
-				//Get the current shuttle rotation, then applies hand difference (y) to shuttle's z rotation
-				Vector3 newRot = transform.localRotation.eulerAngles;
-				newRot.z = -handDiff.y * 20.0f;
-				
-				// adding the rot.z as a way to use banking (rolling) to turn.
-				newRot.y += handDiff.z * 3.0f - newRot.z * 0.03f * transform.rigidbody.velocity.magnitude;
-				newRot.x = -(avgPalmForward.y - 0.1f) * 100.0f;
-				
-				// if closed fist, then stop the plane and slowly go backwards.
-				if (frame.Fingers.Count < 3)
-				{
-					//thrustPower = -3.0f;
-				}
-				
-				transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(newRot), 0.1f);
-				//transform.rigidbody.velocity = transform.up * thrustPower;
-				transform.rigidbody.AddForce(transform.up * thrustPower, ForceMode.Force);
-			}
-			//Else Fall to deaths
-			else
-			{
-				
-			}
-		}
-	}
-
+	//Draws on GUI
 	void OnGUI()
 	{
 		if (inTropo)
-			GUI.Label(new Rect(10, 10, 100, 50), "Current Level: Troposphere");
+			GUI.Label(new Rect(10, 10, 100, 100), "Current Level: Troposphere");
 		if (inStrat)
-			GUI.Label(new Rect(10, 10, 100, 50), "Current Level: Stratosphere");
+			GUI.Label(new Rect(10, 10, 100, 100), "Current Level: Stratosphere");
 		if (inMeso)
-			GUI.Label(new Rect(10, 10, 100, 50), "Current Level: Mesosphere");
+			GUI.Label(new Rect(10, 10, 100, 100), "Current Level: Mesosphere");
 		if (inTherm)
-			GUI.Label(new Rect(10, 10, 100, 50), "Current Level: Thermosphere");
+			GUI.Label(new Rect(10, 10, 100, 100), "Current Level: Thermosphere");
 
 		if (timeLeft > 0)
 			GUI.Label(new Rect(550, 400, 0, 0), "" + timeLeft, largeFont);
 
-		GUI.Label(new Rect(10, 50, 100, 50), "Speed: " + transform.rigidbody.velocity.magnitude);
-		GUI.Label (new Rect(10, 70, 100, 50), "Height: " + transform.position.y);
-		GUI.Label(new Rect(10, 90, 100, 50), "Fuel: " + fuelAmt);
+		GUI.Label(new Rect(10, 50, 100, 100), "Speed: " + transform.rigidbody.velocity.magnitude);
+		GUI.Label (new Rect(10, 70, 100, 100), "Height: " + transform.position.y);
+		GUI.Label(new Rect(10, 90, 100, 100), "Fuel: " + fuelAmt);
 	}
 }
