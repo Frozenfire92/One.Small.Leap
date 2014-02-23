@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections; 
-using System.Random;
+using System;
 
 public class wind : MonoBehaviour {
 
-	System.Random random = new Random();
+	System.Random random = new System.Random();
 	public GameObject shuttle;
 	public int stopTime = 0; 
 	public int timer = 0;
@@ -12,23 +12,31 @@ public class wind : MonoBehaviour {
 	public int xValue = 0;
 	public int yValue = 0;  // never incremented
 	public int zValue = 0;
+	bool windy = false;
 
 
 	// Use this for initialization
 	void Start () {
 	
-		xValue = random.Next (0, 100);
-		zValue = random.Next (0, 100);
-		stopTime = random.Next (30, 2000);
-		shuttle.transform.rigidbody.AddForce
+		if (windy == false) {
+						xValue = random.Next (0, 1000);
+						zValue = random.Next (0, 1000);
+			stopTime = 100000;  //random.Next (30, 2000);
+						shuttle.transform.rigidbody.AddForce(xValue, yValue, zValue);
+				windy = true;
+				}
 
-		timer ++;
 	}
 	
 	// Update is called once per frame
 	void Update () {
 	
+		if (windy == true) {
 
-		timer ++;
+			timer ++;
+
+							}
+
+
 	}
 }
