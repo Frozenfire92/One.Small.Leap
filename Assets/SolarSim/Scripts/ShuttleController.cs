@@ -11,9 +11,6 @@ public class ShuttleController : MonoBehaviour
 	private bool stageOneReleased;
 	private bool stageTwoReleased;
 
-	//Terrain GameObject
-	public GameObject terrain;
-
 	//Fuel
 	[Range(0, 100)]
 	public float fuelAmt = 100f;
@@ -148,7 +145,6 @@ public class ShuttleController : MonoBehaviour
 			{
 				fuelMain.transform.parent = null;
 				stageTwoReleased = true;
-				terrain.SetActive = false;
 			}
 		}
 	}
@@ -188,7 +184,7 @@ public class ShuttleController : MonoBehaviour
 		}
 
 		//Thermosphere check
-		if (transform.position.y > 22857 && transform.position.y < 100000)
+		if (transform.position.y > 22857 && transform.position.y < 75000)
 		{
 			inTropo = false;
 			inStrat = false;
@@ -198,12 +194,12 @@ public class ShuttleController : MonoBehaviour
 		}
 
 		//Orbit check
-		if (transform.position.y >= 100000)
+		if (transform.position.y >= 75000)
 		{
 			inTropo = false;
 			inStrat = false;
 			inMeso = false;
-			inTherm = false;
+			inTherm = true;
 			inOrbit = true;
 		}
 	}
