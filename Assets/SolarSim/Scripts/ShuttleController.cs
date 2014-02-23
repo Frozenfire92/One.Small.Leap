@@ -8,6 +8,13 @@ public class ShuttleController : MonoBehaviour
 	public GameObject fuelLeft;
 	public GameObject fuelRight;
 	public GameObject fuelMain;
+	private bool stageOneReleased;
+	private bool stageTwoReleased;
+
+	//Fuel
+	[Range(0, 100)]
+	public float fuelAmt = 100;
+	public float fuelDrain = 1;
 
 	//The value of force to apply to thruster
 	public float thrustPower = 20.0f;
@@ -30,6 +37,9 @@ public class ShuttleController : MonoBehaviour
 		{
 			Debug.Log ("Leap On!");
 		}
+
+		stageOneReleased = false;
+		stageTwoReleased = false;
 
 		inTropo = true;
 		inStrat = false;
@@ -68,6 +78,31 @@ public class ShuttleController : MonoBehaviour
 			}
 		}
 		return h;
+	}
+
+	//Returns the magnitude of distance the shuttle is from origin
+	float OriginDisplacement()
+	{
+		return Mathf.Sqrt((transform.position.x * transform.position.x) + (transform.position.z * transform.position.z));
+	}
+
+	float ManageFuel()
+	{
+		//Game Over
+		if (fuelAmt <= 0.0f)
+		{
+
+		}
+		//Else manage fuel
+		else
+		{
+			//Check displacement from origin
+
+			//Subtract used fuel
+
+			//Check if time to remove moduel
+			if ()
+		}
 	}
 
 	//Checks the current y position relative to the ground and determines which layer of atmosphere the shuttle is in
