@@ -9,6 +9,7 @@ public class LeapFly : MonoBehaviour
 {
 
     Controller m_leapController;
+	public float forceMult = 50.0f;
 
 	
     // Use this for initialization
@@ -75,7 +76,7 @@ public class LeapFly : MonoBehaviour
             newRot.y += handDiff.z * 3.0f - newRot.z * 0.03f * transform.parent.rigidbody.velocity.magnitude;
             newRot.x = -(avgPalmForward.y - 0.1f) * 100.0f;
 
-            float forceMult = 20.0f;
+            
 
             // if closed fist, then stop the plane and slowly go backwards.
             if (frame.Fingers.Count < 3)

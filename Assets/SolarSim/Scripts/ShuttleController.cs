@@ -1,14 +1,46 @@
-﻿using UnityEngine;
+﻿/* 
+ * This script has been adapted from Leap Motion's Fly.cs.  
+ * It controls our Shuttle as it attempts to break orbit.
+ * It uses leap motion to control the shuttle's direction as thrust is
+ * a default action while there is fuel remaining. A countdown will occur to
+ * allow the user to position their hands over the sensor. It will drop the fuel
+ * modules when the shuttle has surpassed certain y coordinates. Once a height
+ * of 75000 unity units is reached the shuttle will be considered to be in orbit
+ * and the level will end. The fuel will be removed based on how far you are from
+ * the origin or launch point. This feature still needs tweaking.
+ * 
+ * Controls:
+ * Two Hands flat over the Leap Motion Controller
+ * Left Down / Right Up - turn to the left
+ * Right Down / Left Up - turn to the right
+ * Tilt both hands forward / backwards - forward/backwards tilt
+ * 
+ * Made with <3 during McHacks 2014
+ * Joel Kuntz, Ray Higgins, Jon Maclellan
+ */
+
+using UnityEngine;
 using System.Collections;
 using Leap;
 
 public class ShuttleController : MonoBehaviour 
 {
+	//The Leap Motion controller object
+	private Leap.Controller leapController;
+
 	//Explosion prefab
 	public GameObject explosionPrefab;
 
 	//Camera Reference
 	public GameObject camera;
+
+	//Thruster Reference
+	public ParticleSystem leftThruster;
+	public ParticleSystem rightThruster;
+	public ParticleSystem mainThruster;
+
+	//Thruster Force
+	public float thrustPower = 20.0f;
 
 	//Fuel
 	public GameObject fuelLeft;
@@ -21,12 +53,6 @@ public class ShuttleController : MonoBehaviour
 	public float fuelDrain = 0.001f;
 	private bool outOfFuel;
 	private int outOfFuelCount;
-
-	//Thrust Force
-	public float thrustPower = 20.0f;
-
-	//The Leap Motion controller object
-	private Leap.Controller leapController;
 
 	//Current Atmosphere Layer
 	private bool inTropo;
@@ -43,7 +69,7 @@ public class ShuttleController : MonoBehaviour
 	//GUI
 	GUIStyle largeFont = new GUIStyle();
 
-	//Use this for initialization
+	//Object/script initialization
 	void Start () 
 	{
 		//Countdown Text
@@ -94,10 +120,9 @@ public class ShuttleController : MonoBehaviour
 		//if out of fuel
 		else if (outOfFuel)
 		{
-			//fall to deaths
-			if (outOfFuelCount < 2)
+			//Add a downward force for three frames to help speed up the slow down process
+			if (outOfFuelCount < 3)
 			{
-				//Slow Shuttle Down
 				transform.rigidbody.AddForce(-transform.up * thrustPower, ForceMode.Force);
 				outOfFuelCount++;
 			}
@@ -123,7 +148,7 @@ public class ShuttleController : MonoBehaviour
 			//Get the frame info from the leap motion controller
 			Frame frame = leapController.Frame();
 			
-			//If there are 2 hands update leap logic
+			//If there are 2 hands in the current Leap Frame update leap logic
 			if (frame.Hands.Count >= 2)
 			{
 				//Assign the hands to variables
@@ -136,24 +161,20 @@ public class ShuttleController : MonoBehaviour
 				//Gets the Vector difference between the palm positions
 				Vector3 handDiff = leftHand.PalmPosition.ToUnityScaled() - rightHand.PalmPosition.ToUnityScaled();
 				
-				//Get the current shuttle rotation, then applies the y hand difference to shuttle's z rotation
+				//Get the current shuttle rotation, then apply the hand's height difference to rotate about the shuttle's z axis
 				Vector3 newRot = transform.localRotation.eulerAngles;
 				newRot.z = -handDiff.y * 20.0f;
 				
-				// adding the rot.z as a way to use banking (rolling) to turn.
+				//Uses the difference between the hands z(depth) and the z rotation to rotate the shuttle about the y axis
 				newRot.y += handDiff.z * 3.0f - newRot.z * 0.03f * transform.rigidbody.velocity.magnitude;
+
+				//Uses the palm's tilt to rotate the shuttle about the x axis
 				newRot.x = -(avgPalmForward.y - 0.1f) * 100.0f;
 				
-				// if closed fist, then stop the plane and slowly go backwards.
-				//if (frame.Fingers.Count < 3)
-				//{
-					//thrustPower = -3.0f;
-				//}
-
 				//Apply the rotation & force
 				transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(newRot), 0.1f);
-				//transform.rigidbody.velocity = transform.up * thrustPower;
 				transform.rigidbody.AddForce(transform.up * thrustPower, ForceMode.Force);
+				//transform.rigidbody.velocity = transform.up * thrustPower;
 			}
 			//Else Fall to deaths
 			else
@@ -163,6 +184,7 @@ public class ShuttleController : MonoBehaviour
 		}
 	}
 
+	//If the shuttle collides with the ground collider and is out of fuel, explode, detach the camera and destroy the shuttle
 	void OnTriggerEnter(Collider other)
 	{
 		if (other.tag == "Ground" && outOfFuel)
@@ -307,7 +329,7 @@ public class ShuttleController : MonoBehaviour
 		}
 	}
 
-	//Draws on GUI
+	//Draws GUI
 	void OnGUI()
 	{
 		if (inTropo)
