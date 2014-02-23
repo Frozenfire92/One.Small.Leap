@@ -154,11 +154,11 @@ public class ShuttleController : MonoBehaviour
 
 			//Get the current shuttle rotation, then applies hand difference (y) to shuttle's z rotation
 			Vector3 newRot = transform.localRotation.eulerAngles;
-			//newRot.z = -handDiff.y * 20.0f;
+			newRot.z = -handDiff.y * 20.0f;
 			
 			// adding the rot.z as a way to use banking (rolling) to turn.
-			//newRot.y += handDiff.z * 3.0f - newRot.z * 0.03f * transform.rigidbody.velocity.magnitude;
-			//newRot.x = -(avgPalmForward.y - 0.1f) * 100.0f;
+			newRot.y += handDiff.z * 3.0f - newRot.z * 0.03f * transform.rigidbody.velocity.magnitude;
+			newRot.x = -(avgPalmForward.y - 0.1f) * 100.0f;
 			
 			// if closed fist, then stop the plane and slowly go backwards.
 			if (frame.Fingers.Count < 3)
