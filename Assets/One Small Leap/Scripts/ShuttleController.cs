@@ -63,6 +63,7 @@ public class ShuttleController : MonoBehaviour
 	private bool inOrbit;
 
 	//Countdown Timer
+	public float countDownTime;
 	private float countDownTimer;
 	private bool countingDown;
 	private int timeLeft;
@@ -96,7 +97,7 @@ public class ShuttleController : MonoBehaviour
 		}
 
 		//Start the countdown timer
-		countDownTimer = Time.time + 10;
+		countDownTimer = Time.time + countDownTime;
 		countingDown = true;
 
 		//Keep the fuel packets on
@@ -111,6 +112,12 @@ public class ShuttleController : MonoBehaviour
 		inMeso = false;
 		inTherm = false;
 		inOrbit = false;
+	}
+
+	//Updates game logic based on frame changes
+	void Update()
+	{
+		if (Input.GetButtonDown("Restart")) Application.LoadLevel(Application.loadedLevel);
 	}
 
 	//Updates the game logic based on discrete physics updates
@@ -382,13 +389,13 @@ public class ShuttleController : MonoBehaviour
 			GUI.Label(new Rect(620, 400, 0, 0), "" + timeLeft, largeFont);
 
 		if (!inOrbit && outOfFuel)
-			GUI.Label(new Rect(595,400,100,30), "Out of Fuel!", largeFont);
+			GUI.Label(new Rect(UnityEngine.Screen.width / 2, UnityEngine.Screen.height/2, 100, 30), "Out of Fuel!\nPress R to retry!", largeFont);
 
 		if (inOrbit)
 			GUI.Label(new Rect(595, 400, 100, 30), "Orbit Reached!", largeFont);
 
-		GUI.Label(new Rect(10, 50, 200, 100), "Speed: " + transform.rigidbody.velocity.magnitude, mediumFont);
-		GUI.Label (new Rect(10, 90, 200, 100), "Height: " + transform.position.y, mediumFont);
-		GUI.Label(new Rect(10, 130, 200, 100), "Fuel: " + fuelAmt, mediumFont);
+		GUI.Label(new Rect(10, 50, 200, 100), "Speed: " + (int)transform.rigidbody.velocity.magnitude, mediumFont);
+		GUI.Label (new Rect(10, 90, 200, 100), "Height: " + (int)transform.position.y, mediumFont);
+		GUI.Label(new Rect(10, 130, 200, 100), "Fuel: " + (int)fuelAmt, mediumFont);
 	}
 }
