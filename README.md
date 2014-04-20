@@ -7,7 +7,7 @@ Joel Kuntz, Ray Higgins, Jon MacLellan
 
 Uses: Unity3D, LeapMotion
 
-In One Small Leap you guide the space shuttle into orbit using your hands while conserving fuel. The closer you are to the blue beacon the less fuel you will consume.
+In One Small Leap you guide the space shuttle into orbit using your hands. The closer you are to the blue beacon the less fuel you will consume.
 
 ###Controls
 - Two hands flat over the Leap Motion Controller, closed fist may work better for some
